@@ -1,0 +1,828 @@
+<meta charset="utf-8">
+<title>検証会要否判定</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+  :root{
+    --paper:#f5f1e8;
+    --surface:#ffffff;
+    --surface-2:#faf7f0;
+    --ink:#232a26;
+    --ink-soft:#5d6a63;
+    --ink-faint:#8a958e;
+    --line:#ded5c0;
+    --line-strong:#c9bd9f;
+    --accent:#245a56;
+    --accent-ink:#173e3b;
+    --accent-soft:#dde9e5;
+    --accent-soft-line:#b9d1cb;
+    --routeA:#9c4632;
+    --routeA-soft:#f3e1d8;
+    --routeA-line:#dcb59e;
+    --routeB:#2f5b7a;
+    --routeB-soft:#dee7ee;
+    --routeB-line:#b7cbdb;
+    --caution:#8f6a26;
+    --caution-soft:#f1e7cd;
+    --caution-line:#d9c48c;
+    --shadow: 0 1px 2px rgba(35,42,38,.06), 0 8px 24px -12px rgba(35,42,38,.18);
+    --font-display:'Shippori Mincho', 'Hiragino Mincho ProN', serif;
+    --font-body:'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --font-mono:'JetBrains Mono', 'SF Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#151a17;
+      --surface:#1c2320;
+      --surface-2:#202824;
+      --ink:#e9e5d8;
+      --ink-soft:#a6b0a8;
+      --ink-faint:#71796f 	;
+      --line:#333c36;
+      --line-strong:#454f47;
+      --accent:#6fada4;
+      --accent-ink:#bfe0d9;
+      --accent-soft:#213330;
+      --accent-soft-line:#33534c;
+      --routeA:#d98a6f;
+      --routeA-soft:#382520;
+      --routeA-line:#5c3a2e;
+      --routeB:#89b1cd;
+      --routeB-soft:#1f2a32;
+      --routeB-line:#33465a;
+      --caution:#d9b567;
+      --caution-soft:#332a17;
+      --caution-line:#57451f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#151a17;
+    --surface:#1c2320;
+    --surface-2:#202824;
+    --ink:#e9e5d8;
+    --ink-soft:#a6b0a8;
+    --ink-faint:#71796f;
+    --line:#333c36;
+    --line-strong:#454f47;
+    --accent:#6fada4;
+    --accent-ink:#bfe0d9;
+    --accent-soft:#213330;
+    --accent-soft-line:#33534c;
+    --routeA:#d98a6f;
+    --routeA-soft:#382520;
+    --routeA-line:#5c3a2e;
+    --routeB:#89b1cd;
+    --routeB-soft:#1f2a32;
+    --routeB-line:#33465a;
+    --caution:#d9b567;
+    --caution-soft:#332a17;
+    --caution-line:#57451f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    margin:0;
+    padding:2.5rem 1.25rem 5rem;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:660px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:1.5rem;
+  }
+
+  /* header */
+  .masthead{
+    display:flex;
+    flex-direction:column;
+    gap:.35rem;
+    padding-bottom:1.1rem;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    letter-spacing:.12em;
+    color:var(--accent);
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.85rem;
+    margin:0;
+    text-wrap:balance;
+    color:var(--ink);
+  }
+  .source{
+    font-size:.82rem;
+    color:var(--ink-faint);
+  }
+
+  /* trail */
+  .trail{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+    align-items:center;
+    min-height:1.6rem;
+  }
+  .chip{
+    font-family:var(--font-mono);
+    font-size:.74rem;
+    font-weight:700;
+    padding:.3rem .6rem;
+    border-radius:999px;
+    border:1px solid var(--line-strong);
+    background:var(--surface-2);
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .chip.tone-a{background:var(--routeA-soft); border-color:var(--routeA-line); color:var(--routeA);}
+  .chip.tone-b{background:var(--routeB-soft); border-color:var(--routeB-line); color:var(--routeB);}
+  .chip.tone-accent{background:var(--accent-soft); border-color:var(--accent-soft-line); color:var(--accent-ink);}
+  .trail-reset{
+    margin-left:auto;
+    background:none;
+    border:none;
+    font-family:var(--font-body);
+    font-size:.78rem;
+    color:var(--ink-faint);
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+    padding:.2rem 0;
+  }
+  .trail-reset:hover{color:var(--ink);}
+  .trail-reset:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px;}
+
+  /* card */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:1.9rem 1.8rem;
+    box-shadow:var(--shadow);
+  }
+  .step-label{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.08em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin:0 0 .5rem;
+  }
+  .question{
+    font-family:var(--font-display);
+    font-size:1.28rem;
+    font-weight:700;
+    margin:0 0 1.2rem;
+    text-wrap:balance;
+  }
+  .hint{
+    font-size:.86rem;
+    color:var(--ink-soft);
+    margin:-0.6rem 0 1.2rem;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:.65rem;
+    margin-bottom:1.4rem;
+  }
+  .opt{
+    display:flex;
+    align-items:flex-start;
+    gap:.75rem;
+    padding:.85rem 1rem;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--surface-2);
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover{border-color:var(--line-strong);}
+  .opt input{
+    margin-top:.2rem;
+    accent-color:var(--accent);
+    width:1.05rem;
+    height:1.05rem;
+    flex-shrink:0;
+  }
+  .opt:has(input:checked){
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .opt:focus-within{outline:2px solid var(--accent); outline-offset:1px;}
+  .opt .opt-main{font-weight:700; font-size:.98rem;}
+  .opt .opt-sub{font-size:.82rem; color:var(--ink-soft); margin-top:.15rem;}
+  .opt .opt-tag{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    color:var(--accent);
+    font-weight:700;
+    margin-right:.15rem;
+  }
+
+  .btn-row{display:flex; gap:.7rem; flex-wrap:wrap;}
+  button.primary, button.ghost{
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:.92rem;
+    padding:.72rem 1.3rem;
+    border-radius:9px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  button.primary{
+    background:var(--accent);
+    color:var(--surface);
+  }
+  button.primary:disabled{opacity:.4; cursor:not-allowed;}
+  button.primary:not(:disabled):hover{opacity:.9;}
+  button.ghost{
+    background:transparent;
+    border-color:var(--line-strong);
+    color:var(--ink-soft);
+  }
+  button.ghost:hover{border-color:var(--ink-soft); color:var(--ink);}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  /* info / reference boxes */
+  .box{
+    border-radius:10px;
+    padding:1rem 1.1rem;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    margin-bottom:1rem;
+  }
+  .box-title{
+    font-family:var(--font-mono);
+    font-size:.75rem;
+    font-weight:700;
+    letter-spacing:.05em;
+    margin:0 0 .5rem;
+    color:var(--ink-soft);
+  }
+  .box p{margin:.3rem 0; font-size:.9rem;}
+  .box ul{margin:.3rem 0; padding-left:1.2rem; font-size:.9rem;}
+  .box li{margin:.25rem 0;}
+  .box.tone-a{background:var(--routeA-soft); border-color:var(--routeA-line);}
+  .box.tone-a .box-title{color:var(--routeA);}
+  .box.tone-b{background:var(--routeB-soft); border-color:var(--routeB-line);}
+  .box.tone-b .box-title{color:var(--routeB);}
+  .box.tone-caution{background:var(--caution-soft); border-color:var(--caution-line);}
+  .box.tone-caution .box-title{color:var(--caution);}
+
+  /* verdict */
+  .verdict-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:.85rem;
+    padding:.4rem .8rem;
+    border-radius:999px;
+    margin-bottom:.9rem;
+  }
+  .verdict-badge.a{background:var(--routeA-soft); color:var(--routeA); border:1px solid var(--routeA-line);}
+  .verdict-badge.b{background:var(--routeB-soft); color:var(--routeB); border:1px solid var(--routeB-line);}
+  .verdict-badge.neutral{background:var(--accent-soft); color:var(--accent-ink); border:1px solid var(--accent-soft-line);}
+  .verdict-badge .dot{width:.5rem; height:.5rem; border-radius:50%; background:currentColor;}
+  .verdict-title{
+    font-family:var(--font-display);
+    font-size:1.4rem;
+    font-weight:700;
+    margin:0 0 .9rem;
+    text-wrap:balance;
+  }
+  .steps-list{
+    counter-reset:sl;
+    list-style:none;
+    margin:0 0 1.2rem;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+  }
+  .steps-list li{
+    counter-increment:sl;
+    display:flex;
+    gap:.7rem;
+    font-size:.92rem;
+    align-items:flex-start;
+  }
+  .steps-list li::before{
+    content:counter(sl);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:.75rem;
+    color:var(--accent);
+    background:var(--accent-soft);
+    border:1px solid var(--accent-soft-line);
+    width:1.4rem; height:1.4rem;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    margin-top:.05rem;
+  }
+
+  /* reference section (collapsible) */
+  .refs{
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+  }
+  .refs[hidden]{
+    display:none;
+  }
+  details{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:0;
+    overflow:hidden;
+  }
+  summary{
+    cursor:pointer;
+    padding:.9rem 1.1rem;
+    font-weight:700;
+    font-size:.92rem;
+    list-style:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.6rem;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::after{
+    content:'+';
+    font-family:var(--font-mono);
+    font-size:1.1rem;
+    color:var(--ink-faint);
+    flex-shrink:0;
+  }
+  details[open] summary::after{content:'−';}
+  details:focus-within{outline:2px solid var(--accent); outline-offset:-2px;}
+  .details-body{
+    padding:0 1.1rem 1.1rem;
+    font-size:.88rem;
+    color:var(--ink-soft);
+  }
+  .details-body p{margin:.4rem 0;}
+  .details-body strong{color:var(--ink);}
+  .details-body .lead{font-weight:700; color:var(--ink); margin-bottom:.15rem;}
+
+  footer.page-footer{
+    text-align:center;
+    font-size:.76rem;
+    color:var(--ink-faint);
+    padding-top:1rem;
+  }
+
+  .criteria-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.4rem;}
+  .criteria-list li{display:flex; gap:.5rem; font-size:.87rem;}
+  .criteria-list li::before{content:'●'; color:var(--caution); font-size:.5rem; margin-top:.45rem;}
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <div class="eyebrow">神戸市立医療センター中央市民病院 医療安全管理室</div>
+    <h1>1次検証会 要否判定</h1>
+    <div class="source">医療安全マニュアル（本体）Ⅲ-2-2「レベル3b以上のアクシデント発生時の流れ」準拠（p.40–46）</div>
+  </div>
+
+  <div class="trail" id="trail"></div>
+
+  <div class="card" id="card"></div>
+
+  <div class="refs" id="refs" hidden>
+    <details>
+      <summary>患者・家族への説明区分（a・b・c）</summary>
+      <div class="details-body">
+        <p><span class="lead">a. 合併症と判断した場合</span>患者・家族に説明する（追加診療費は患者負担）。</p>
+        <p><span class="lead">b. 医療過誤かどうか不明な場合</span>患者・家族に事実経過のみを報告する。医療安全管理室・医事課・主治医・診療科部長・第三者・弁護士等によるアクシデント検証会（二次検証）で判断のうえ、患者に最終結果を報告する（追加診療費の請求は一旦保留）。</p>
+        <p><span class="lead">c. 医療過誤が明らかな場合</span>患者・家族に事実経過を報告する（重大事例は記者会見）。医療安全管理室・医事課・弁護士と謝罪方法・賠償額・再発防止策を検討し、患者に結果を報告する（追加診療費の請求は保留）。</p>
+      </div>
+    </details>
+    <details>
+      <summary>共感の言葉かけについて</summary>
+      <div class="details-body">
+        <p>合併症か否かに関わらず、この時点で共感を示すことが訴訟リスクを下げるとされる。「このような事態になり大変残念です」等と伝える。</p>
+        <p>ただし、この時点では責任の所在は明らかにせず、「何がどうして起こったかについては現在調査中であり、今後必ずきちんと説明させていただきます」と約束するにとどめる。</p>
+      </div>
+    </details>
+    <details>
+      <summary>合併症判断のルール</summary>
+      <div class="details-body">
+        <p>合併症の判断は、同意書などによる患者説明の内容を踏まえて、主治医・診療科部長・指導医ならびに医療安全管理室が協議して判断する。</p>
+        <p><strong>診療科のみの判断で患者に補償等の話をしないこと。</strong></p>
+        <p>合併症の判断であっても患者・家族より疑義の申し出があるときは、医療安全管理室において再度第三者・弁護士等も加えた検証会（二次検証）を行い判断する。</p>
+      </div>
+    </details>
+    <details>
+      <summary>記録：トリアージ判断票</summary>
+      <div class="details-body">
+        <p>事象レベル3b以上の全事案について、トリアージ判断票（別紙様式）を作成し、医療安全管理室が保管する。</p>
+        <p>判断票には、直行基準該当の有無・振り分け先（経路a・b）・判断者（室長）・判断日時を記載する。</p>
+      </div>
+    </details>
+  </div>
+
+  <footer class="page-footer">この判定は院内マニュアルに基づく参考結果です。個々の事案の最終判断は医療安全管理室長が行います。患者を特定する情報は入力しないでください。</footer>
+</div>
+
+<script>
+(function(){
+  var CRITERIA = [
+    {id:'c1', tag:'基準①', main:'死亡または死亡が切迫している事例', sub:'原疾患の自然経過によるものを除く。医療事故調査制度の対象となりうる事案を含む。'},
+    {id:'c2', tag:'基準②', main:'永続的障害・重篤な後遺症が予見される事例', sub:'事象レベル4a・4b相当。機能障害・美容上の問題の有無を問わない。'},
+    {id:'c3', tag:'基準③', main:'患者・家族から正式なクレーム・申し出があった事例', sub:'口頭・書面を問わない。訴訟・ADR申し立ての予告を含む。'}
+  ];
+  var ESCALATE_REF = [
+    '同種・類似事案の再発（過去2年以内）',
+    '複数部門・複数職種にまたがるシステム要因が疑われる事例',
+    '院内周知を要する重大な安全情報を含む事例',
+    '上記に準ずると室長が判断した事例'
+  ];
+
+  var state = {
+    step: 'level',
+    level: null,      // '3a' | '3b'
+    criteria: {c1:false, c2:false, c3:false},
+    viaConference: false,
+    escalate: null,   // 'yes' | 'no'
+    death: null       // 'yes' | 'no'
+  };
+  var trail = [];
+  var history = [];
+
+  var trailEl = document.getElementById('trail');
+  var cardEl = document.getElementById('card');
+  var refsEl = document.getElementById('refs');
+
+  function reset(){
+    state = {step:'level', level:null, criteria:{c1:false,c2:false,c3:false}, viaConference:false, escalate:null, death:null};
+    trail = [];
+    history = [];
+    render();
+  }
+
+  function snapshot(){
+    history.push({
+      state: JSON.parse(JSON.stringify(state)),
+      trail: JSON.parse(JSON.stringify(trail))
+    });
+  }
+
+  function goBack(){
+    if(history.length === 0) return;
+    var last = history.pop();
+    state = last.state;
+    trail = last.trail;
+    render();
+  }
+
+  function backBtn(){
+    if(history.length === 0) return null;
+    var b = el('button','ghost','← 戻る');
+    b.addEventListener('click', goBack);
+    return b;
+  }
+
+  function pushTrail(label, tone){
+    trail.push({label:label, tone:tone||''});
+  }
+
+  function renderTrail(){
+    trailEl.innerHTML = '';
+    if(trail.length === 0){ trailEl.style.borderBottom = 'none'; }
+    trail.forEach(function(t){
+      var c = document.createElement('span');
+      c.className = 'chip' + (t.tone ? ' tone-'+t.tone : '');
+      c.textContent = t.label;
+      trailEl.appendChild(c);
+    });
+    if(trail.length > 0){
+      var btn = document.createElement('button');
+      btn.className = 'trail-reset';
+      btn.textContent = 'はじめから';
+      btn.addEventListener('click', reset);
+      trailEl.appendChild(btn);
+    }
+  }
+
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  var REFS_VISIBLE_STEPS = ['not_applicable','routeA_summary','death','dept_handling','investigation','prevention'];
+
+  function render(){
+    renderTrail();
+    cardEl.innerHTML = '';
+    refsEl.hidden = REFS_VISIBLE_STEPS.indexOf(state.step) === -1;
+    var fn = STEPS[state.step];
+    fn(cardEl);
+  }
+
+  var STEPS = {};
+
+  STEPS.level = function(root){
+    root.appendChild(el('p','step-label','STEP 1 — 事象レベル'));
+    root.appendChild(el('h2','question','対象事案の事象レベルはどれですか？'));
+    root.appendChild(el('p','hint','医療安全カンファレンスへの報告区分に基づいて選択してください。'));
+
+    var opts = el('div','options');
+    var choices = [
+      {v:'3a', tag:'Lv.3a以下', main:'簡単な処置や治療までのレベル（インシデント）', sub:'消毒・湿布・皮膚の縫合・鎮痛剤の投与 等'},
+      {v:'3b', tag:'Lv.3b以上', main:'アクシデント', sub:'上記を超える治療・処置を要する事案、または後遺症・死亡等が疑われる事案'}
+    ];
+    choices.forEach(function(c){
+      var label = el('label','opt');
+      label.innerHTML = '<input type="radio" name="level" value="'+c.v+'">'+
+        '<div><div class="opt-main"><span class="opt-tag">'+c.tag+'</span>'+c.main+'</div>'+
+        '<div class="opt-sub">'+c.sub+'</div></div>';
+      opts.appendChild(label);
+    });
+    root.appendChild(opts);
+
+    var btnRow = el('div','btn-row');
+    var bb0 = backBtn();
+    if(bb0) btnRow.appendChild(bb0);
+    var next = el('button','primary','次へ');
+    next.disabled = true;
+    next.addEventListener('click', function(){
+      snapshot();
+      var val = root.querySelector('input[name="level"]:checked').value;
+      state.level = val;
+      if(val === '3a'){
+        pushTrail('Lv.3a以下（インシデント）','');
+        state.step = 'not_applicable';
+      } else {
+        pushTrail('Lv.3b以上（アクシデント）','accent');
+        state.step = 'criteria';
+      }
+      render();
+    });
+    opts.addEventListener('change', function(){ next.disabled = false; });
+    btnRow.appendChild(next);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.not_applicable = function(root){
+    root.appendChild(el('p','step-label','対象外'));
+    root.appendChild(el('h2','question','このフローの対象外です'));
+    var box = el('div','box tone-caution');
+    box.appendChild(el('p','box-title','レベル3a以下（インシデント）の対応'));
+    box.appendChild(el('div','','<p>本判定フローは、事象レベル3b以上（アクシデント）を対象とした「1次検証会（アクシデント報告会）」の要否判定です。レベル3a以下は下記の通常フローに従ってください。</p>'+
+      '<ul>'+
+      '<li>合併症と判断 → 患者・家族に説明（追加診療費は患者負担）→ 追加診療の実施 → 必要に応じてインシデント報告</li>'+
+      '<li>過失が否定できないと判断 → 患者・家族に事実経過のみ説明 → 追加診療の実施（追加診療費は一旦保留）→ インシデント報告 → 医事課・医療安全管理室で追加診療費請求の是非を検討</li>'+
+      '</ul>'));
+    root.appendChild(box);
+    var btnRow = el('div','btn-row');
+    var bb = backBtn();
+    if(bb) btnRow.appendChild(bb);
+    var restart = el('button','ghost','はじめから');
+    restart.addEventListener('click', reset);
+    btnRow.appendChild(restart);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.criteria = function(root){
+    root.appendChild(el('p','step-label','STEP 2 — 直行基準（室長即断）'));
+    root.appendChild(el('h2','question','【直行基準】①〜③のいずれかに該当しますか？'));
+    root.appendChild(el('p','hint','いずれか1項目でも該当すれば、医療安全管理室長の即断により1次検証会（アクシデント報告会）へ直行します。該当するものをすべて選択してください（なければ未選択のまま次へ）。'));
+
+    var opts = el('div','options');
+    CRITERIA.forEach(function(c){
+      var label = el('label','opt');
+      label.innerHTML = '<input type="checkbox" name="crit" value="'+c.id+'">'+
+        '<div><div class="opt-main"><span class="opt-tag">'+c.tag+'</span>'+c.main+'</div>'+
+        '<div class="opt-sub">'+c.sub+'</div></div>';
+      opts.appendChild(label);
+    });
+    root.appendChild(opts);
+
+    var btnRow = el('div','btn-row');
+    var bb1 = backBtn();
+    if(bb1) btnRow.appendChild(bb1);
+    var next = el('button','primary','判定する');
+    next.addEventListener('click', function(){
+      snapshot();
+      var checked = Array.prototype.slice.call(root.querySelectorAll('input[name="crit"]:checked'));
+      var matched = checked.map(function(i){ return i.value; });
+      state.criteria = {c1:matched.indexOf('c1')>-1, c2:matched.indexOf('c2')>-1, c3:matched.indexOf('c3')>-1};
+
+      if(matched.length > 0){
+        var tags = matched.map(function(id){ return CRITERIA.filter(function(c){return c.id===id;})[0].tag.replace('基準',''); }).join('・');
+        pushTrail('直行基準'+tags+'に該当','a');
+        state.viaConference = false;
+        state.step = 'routeA_summary';
+      } else {
+        pushTrail('直行基準 非該当','');
+        state.step = 'conference';
+      }
+      render();
+    });
+    btnRow.appendChild(next);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.conference = function(root){
+    root.appendChild(el('p','step-label','STEP 3 — 医療安全カンファレンス（通常経路）'));
+    root.appendChild(el('h2','question','カンファレンスで1次検証会への昇格が必要と判断されましたか？'));
+
+    var infoBox = el('div','box tone-b');
+    infoBox.appendChild(el('p','box-title','経路b：医療安全カンファレンス（毎週水曜）'));
+    infoBox.appendChild(el('p','','コアメンバー：医療安全管理室長・副室長・多職種コアメンバー（当事者・当該セーフティマネージャー等関係者は招聘しない）。必要に応じて聞き取り調査ミーティングを別途設定したうえで、下記を審議します。'));
+    root.appendChild(infoBox);
+
+    var refBox = el('div','box tone-caution');
+    refBox.appendChild(el('p','box-title','昇格を検討する参考基準（いずれか該当で検討）'));
+    var ul = el('ul','criteria-list');
+    ESCALATE_REF.forEach(function(t){ ul.appendChild(el('li','',t)); });
+    refBox.appendChild(ul);
+    root.appendChild(refBox);
+
+    root.appendChild(el('p','hint','最終判断は医療安全管理室長の総合判断によります。'));
+
+    var btnRow = el('div','btn-row');
+    var bb2 = backBtn();
+    if(bb2) btnRow.appendChild(bb2);
+    var yes = el('button','primary','1次検証会への昇格が必要');
+    var no = el('button','ghost','部署内対応で足りる');
+    yes.addEventListener('click', function(){
+      snapshot();
+      pushTrail('カンファレンス → 検証会へ昇格','a');
+      state.viaConference = true;
+      state.step = 'routeA_summary';
+      render();
+    });
+    no.addEventListener('click', function(){
+      snapshot();
+      pushTrail('カンファレンス → 部署内対応','b');
+      state.step = 'dept_handling';
+      render();
+    });
+    btnRow.appendChild(yes);
+    btnRow.appendChild(no);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.dept_handling = function(root){
+    root.appendChild(el('div','verdict-badge b','<span class="dot"></span>部署内対応'));
+    root.appendChild(el('h2','verdict-title','1次検証会は不要。部署内対応で終結します。'));
+
+    var ol = el('ol','steps-list');
+    [
+      '部署内での改善策を立案する',
+      '改善策の実施状況を記録する',
+      '医療安全管理室が追跡管理を行う'
+    ].forEach(function(t){ ol.appendChild(el('li','',t)); });
+    root.appendChild(ol);
+
+    var box = el('div','box');
+    box.appendChild(el('p','box-title','記録'));
+    box.appendChild(el('p','','事象レベル3b以上の事案として、トリアージ判断票を作成し医療安全管理室が保管してください（詳細は下部の参考事項）。'));
+    root.appendChild(box);
+
+    var btnRow = el('div','btn-row');
+    var bb3 = backBtn();
+    if(bb3) btnRow.appendChild(bb3);
+    var again = el('button','primary','別の事案を判定する');
+    again.addEventListener('click', reset);
+    btnRow.appendChild(again);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.routeA_summary = function(root){
+    var badge = state.viaConference ? '<span class="dot"></span>経路a（カンファレンス経由で昇格）' : '<span class="dot"></span>経路a（直行基準に該当）';
+    root.appendChild(el('div','verdict-badge a', badge));
+    root.appendChild(el('h2','verdict-title','1次検証会（アクシデント報告会）を開催します'));
+
+    if(!state.viaConference){
+      var reasons = [];
+      if(state.criteria.c1) reasons.push('基準①：死亡または死亡が切迫している事例');
+      if(state.criteria.c2) reasons.push('基準②：永続的障害・重篤な後遺症が予見される事例');
+      if(state.criteria.c3) reasons.push('基準③：患者・家族から正式なクレーム・申し出があった事例');
+      var rb = el('div','box tone-a');
+      rb.appendChild(el('p','box-title','該当した直行基準'));
+      var ul = el('ul','', '');
+      reasons.forEach(function(r){ ul.appendChild(el('li','',r)); });
+      rb.appendChild(ul);
+      root.appendChild(rb);
+    }
+
+    var mem = el('div','box');
+    mem.appendChild(el('p','box-title','開催メンバー'));
+    mem.appendChild(el('p','','医療安全管理室（室長・副室長・医療安全管理者）、事故に立ち会った職員、当該セーフティマネージャー等関係者、患者担当病棟師長、リエゾンナース'));
+    mem.appendChild(el('p','','<strong>開催時期：</strong>事案発生後、遅滞なく開催（具体的な期限は定めず、事案の性質・緊急度に応じて室長が判断）'));
+    root.appendChild(mem);
+
+    var ol = el('ol','steps-list');
+    [
+      '患者・家族への説明（下部の説明区分 a・b・c に従う）',
+      '検証会の結果を次回医療安全カンファレンスで事後共有する',
+      '「予期しない死亡・死産」への該当性を判断する（次のステップ）'
+    ].forEach(function(t){ ol.appendChild(el('li','',t)); });
+    root.appendChild(ol);
+
+    var btnRow = el('div','btn-row');
+    var bb4 = backBtn();
+    if(bb4) btnRow.appendChild(bb4);
+    var next = el('button','primary','次へ：死亡・死産の該当性判断');
+    next.addEventListener('click', function(){
+      snapshot();
+      state.step = 'death';
+      render();
+    });
+    btnRow.appendChild(next);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.death = function(root){
+    root.appendChild(el('p','step-label','STEP 4 — 医療法上の判断'));
+    root.appendChild(el('h2','question','「予期しない死亡・死産」に該当しますか？'));
+    root.appendChild(el('p','hint','医療法第6条の10に基づく医療事故調査制度の対象となるかどうかの判断です。'));
+
+    var btnRow = el('div','btn-row');
+    var bb5 = backBtn();
+    if(bb5) btnRow.appendChild(bb5);
+    var yes = el('button','primary','該当する');
+    var no = el('button','ghost','該当しない');
+    yes.addEventListener('click', function(){
+      snapshot();
+      pushTrail('予期しない死亡・死産に該当','a');
+      state.death = 'yes';
+      state.step = 'investigation';
+      render();
+    });
+    no.addEventListener('click', function(){
+      snapshot();
+      pushTrail('予期しない死亡・死産に非該当','');
+      state.death = 'no';
+      state.step = 'prevention';
+      render();
+    });
+    btnRow.appendChild(yes);
+    btnRow.appendChild(no);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.investigation = function(root){
+    root.appendChild(el('div','verdict-badge a','<span class="dot"></span>医療事故調査制度 対象'));
+    root.appendChild(el('h2','verdict-title','医療法第6条の10に基づく手続きを行います'));
+    var box = el('div','box tone-a');
+    box.appendChild(el('p','box-title','医療事故調査制度への対応'));
+    box.appendChild(el('p','','「予期しない死亡・死産」に該当するため、医療法第6条の10に基づく医療事故調査制度の手続きに進みます。速やかに医療安全管理室で対応方針を検討してください。'));
+    root.appendChild(box);
+    var btnRow = el('div','btn-row');
+    var bb6 = backBtn();
+    if(bb6) btnRow.appendChild(bb6);
+    var again = el('button','primary','別の事案を判定する');
+    again.addEventListener('click', reset);
+    btnRow.appendChild(again);
+    root.appendChild(btnRow);
+  };
+
+  STEPS.prevention = function(root){
+    root.appendChild(el('div','verdict-badge b','<span class="dot"></span>検証会での検討で終結'));
+    root.appendChild(el('h2','verdict-title','再発防止策の立案・記録・追跡管理を行います'));
+    var box = el('div','box');
+    box.appendChild(el('p','box-title','以降の対応'));
+    var ol = el('ol','steps-list');
+    ['再発防止策を立案する','対応内容を記録する','医療安全管理室が追跡管理を行う'].forEach(function(t){ ol.appendChild(el('li','',t)); });
+    box.appendChild(ol);
+    root.appendChild(box);
+    var btnRow = el('div','btn-row');
+    var bb7 = backBtn();
+    if(bb7) btnRow.appendChild(bb7);
+    var again = el('button','primary','別の事案を判定する');
+    again.addEventListener('click', reset);
+    btnRow.appendChild(again);
+    root.appendChild(btnRow);
+  };
+
+  render();
+})();
+</script>
